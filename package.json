@@ -1,0 +1,30 @@
+{
+  "name": "cycle-webrtc",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "npm run build:js",
+    "build:js": "browserify src/js/index.js -o dist/js/app.js -t [ babelify --presets [ es2015 ] ]",
+    "watch": "npm run watch:js",
+    "watch:js": "nodemon --watch 'src/js' --exec 'npm run build:js'",
+    "start": "npm run build && npm run watch"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@cycle/core": "^6.0.0",
+    "@cycle/dom": "^9.0.2",
+    "@cycle/http": "^8.0.0",
+    "rx": "^4.0.7",
+    "webrtc-adapter-test": "^0.2.9"
+  },
+  "devDependencies": {
+    "babel-preset-es2015": "^6.3.13",
+    "babelify": "^7.2.0",
+    "browserify": "^13.0.0",
+    "node-sass": "^3.4.2",
+    "nodemon": "^1.8.1",
+    "node-serve": "0.0.3"
+  }
+}
