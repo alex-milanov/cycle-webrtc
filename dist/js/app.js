@@ -19768,10 +19768,6 @@ var _rx2 = _interopRequireDefault(_rx);
 
 var _dom = require('@cycle/dom');
 
-var _webrtcAdapterTest = require('webrtc-adapter-test');
-
-var _webrtcAdapterTest2 = _interopRequireDefault(_webrtcAdapterTest);
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var App = function App(sources) {
@@ -19786,7 +19782,50 @@ var App = function App(sources) {
  	video: true
  });
  */
-	var cbFix = function cbFix(constraints, cb) {
+
+	var constraints = {
+		audio: false,
+		video: true
+	};
+
+	var video$$ = fetchVideoClick$.map(function () {
+		return sources.WEBRTC.getUserMedia(constraints);
+	}).mergeAll().startWith(false);
+
+	return {
+		DOM: video$$.map(function (video$) {
+			console.log(video$);
+			return (0, _dom.section)([(0, _dom.header)('.navbar.navbar-default', [(0, _dom.div)('.container', [(0, _dom.div)('.navbar-header', [(0, _dom.a)('.navbar-brand', 'Cycle.js WebRTC Prototype')])])]), (0, _dom.div)('.container', [(0, _dom.br)(), (0, _dom.button)('.btn#fetch-video', 'Fetch video'), (0, _dom.video)({
+				muted: 'muted',
+				autoplay: 'autoplay',
+				src: video$ ? window.URL.createObjectURL(video$) : ''
+			})])]);
+		})
+	};
+};
+
+exports.default = App;
+
+},{"@cycle/dom":2,"rx":27}],69:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _rx = require('rx');
+
+var _rx2 = _interopRequireDefault(_rx);
+
+var _webrtcAdapterTest = require('webrtc-adapter-test');
+
+var _webrtcAdapterTest2 = _interopRequireDefault(_webrtcAdapterTest);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var makeWebRTCDriver = function makeWebRTCDriver() {
+
+	var getUserMedia = function getUserMedia(constraints, cb) {
 		var cbBuild = function cbBuild(err) {
 			return function (res) {
 				if (err) {
@@ -19799,28 +19838,16 @@ var App = function App(sources) {
 		navigator.getUserMedia(constraints, cbBuild(false), cbBuild(true));
 	};
 
-	var constraints = {
-		audio: false,
-		video: true
-	};
-
-	var getUserMedia$ = _rx2.default.Observable.fromCallback(cbFix);
-
-	var video$$ = fetchVideoClick$.map(function () {
-		return getUserMedia$(constraints);
-	}).mergeAll().startWith(false);
-
-	return {
-		DOM: video$$.map(function (video$) {
-			console.log(video$);
-			return (0, _dom.section)([(0, _dom.header)('.navbar.navbar-default', [(0, _dom.div)('.container', [(0, _dom.div)('.navbar-header', [(0, _dom.a)('.navbar-brand', 'Cycle.js WebRTC Prototype')])])]), (0, _dom.div)('.container', [(0, _dom.br)(), (0, _dom.button)('.btn#fetch-video', 'Fetch video'), video$ ? (0, _dom.video)({ autoplay: 'autoplay', src: window.URL.createObjectURL(video$) }) : ''])]);
-		})
+	return function () {
+		return {
+			getUserMedia: _rx2.default.Observable.fromCallback(getUserMedia)
+		};
 	};
 };
 
-exports.default = App;
+exports.default = makeWebRTCDriver;
 
-},{"@cycle/dom":2,"rx":27,"webrtc-adapter-test":65}],69:[function(require,module,exports){
+},{"rx":27,"webrtc-adapter-test":65}],70:[function(require,module,exports){
 'use strict';
 
 var _rx = require('rx');
@@ -19835,17 +19862,24 @@ var _dom = require('@cycle/dom');
 
 var _http = require('@cycle/http');
 
+var _webrtc = require('./drivers/webrtc');
+
+var _webrtc2 = _interopRequireDefault(_webrtc);
+
 var _index = require('./app/index.js');
 
 var _index2 = _interopRequireDefault(_index);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+console.log((0, _webrtc2.default)());
+
 var drivers = {
 	DOM: (0, _dom.makeDOMDriver)('#app'),
-	HTTP: (0, _http.makeHTTPDriver)()
+	HTTP: (0, _http.makeHTTPDriver)(),
+	WEBRTC: (0, _webrtc2.default)()
 };
 
 _core2.default.run(_index2.default, drivers);
 
-},{"./app/index.js":68,"@cycle/core":1,"@cycle/dom":2,"@cycle/http":11,"rx":27}]},{},[69]);
+},{"./app/index.js":68,"./drivers/webrtc":69,"@cycle/core":1,"@cycle/dom":2,"@cycle/http":11,"rx":27}]},{},[70]);

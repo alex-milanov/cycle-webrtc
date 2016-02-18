@@ -6,8 +6,6 @@ import {
 } from '@cycle/dom';
 
 
-import WebRTC from 'webrtc-adapter-test';
-
 const App = (sources) => {
 
 	// fetchUsers(dom) -> usersRequest(http) -> usersResponse(http) -> displayUsers(dom)
@@ -20,25 +18,13 @@ const App = (sources) => {
 		video: true
 	});
 	*/
-	const cbFix = (constraints, cb) => {
-		let cbBuild = (err) => (res) => {
-			if(err){
-				cb(new Error(res));
-			} else {
-				cb(res);
-			}
-		}
-		navigator.getUserMedia(constraints, cbBuild(false), cbBuild(true));
-	}
 
 	const constraints = {
 		audio: false,
 		video: true
 	};
 
-	const getUserMedia$ = Rx.Observable.fromCallback(cbFix);
-
-	const video$$ = fetchVideoClick$.map(() => getUserMedia$(constraints)).mergeAll().startWith(false);
+	const video$$ = fetchVideoClick$.map(() => sources.WEBRTC.getUserMedia(constraints)).mergeAll().startWith(false);
 
 	return {
 		DOM: video$$.map( video$ => {
@@ -54,7 +40,11 @@ const App = (sources) => {
 					div('.container',[
 						br(),
 						button('.btn#fetch-video', 'Fetch video'),
-						(video$) ? video({autoplay: 'autoplay', src: window.URL.createObjectURL(video$)}) : ''
+						video({
+							muted: 'muted',
+							autoplay: 'autoplay', 
+							src: (video$) ? window.URL.createObjectURL(video$) : ''
+						})
 					])
 				])
 			}
