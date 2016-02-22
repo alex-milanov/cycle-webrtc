@@ -1,8 +1,10 @@
 
 import Rx from 'rx';
-import webRTCAdapterTest from 'webrtc-adapter-test';
+// import webRTCAdapterTest from 'webrtc-adapter-test';
 
 let makeWebRTCDriver = () => {
+
+	navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 
 	let getUserMedia = (constraints, cb) => {
 		let cbBuild = (err) => (res) => {

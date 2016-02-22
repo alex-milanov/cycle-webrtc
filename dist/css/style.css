@@ -1,0 +1,14 @@
+body {
+	margin: 0px;
+	padding: 0px;
+}
+
+#app video {
+	width: 100%;
+	/*display: none;*/
+}
+
+#app canvas#screen {
+	width: 100%;
+	border: 1px solid #333;
+}
