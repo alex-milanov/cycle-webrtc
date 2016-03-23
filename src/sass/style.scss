@@ -1,0 +1,18 @@
+@import "bootstrap-sass/assets/stylesheets/bootstrap";
+
+body {
+	margin: 0px;
+	padding: 0px;
+  background-color: #ccc;
+}
+
+#app {
+  video {
+  	width: 100%;
+  	/*display: none;*/
+  }
+  canvas#screen {
+  	width: 100%;
+  	border: 1px solid #333;
+  }
+}

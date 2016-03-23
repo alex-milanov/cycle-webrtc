@@ -4,22 +4,24 @@ import Rx from 'rx';
 
 let makeWebRTCDriver = () => {
 
-	navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
+	navigator.getUserMedia = navigator.getUserMedia ||
+		navigator.webkitGetUserMedia ||
+		navigator.mozGetUserMedia;
 
 	let getUserMedia = (constraints, cb) => {
 		let cbBuild = (err) => (res) => {
-			if(err){
+			if (err) {
 				cb(new Error(res));
 			} else {
 				cb(res);
 			}
-		}
+		};
 		navigator.getUserMedia(constraints, cbBuild(false), cbBuild(true));
-	} 
+	};
 
 	return () => ({
-		getUserMedia : Rx.Observable.fromCallback(getUserMedia)
+		getUserMedia: Rx.Observable.fromCallback(getUserMedia)
 	});
-}
+};
 
 export default makeWebRTCDriver;
