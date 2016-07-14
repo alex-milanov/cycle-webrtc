@@ -18369,9 +18369,10 @@ var App = function App(sources) {
 
 	var constraints = {
 		audio: false,
-		video: {
-			mediaSource: "screen" // options are 'screen' ‘window‘ or ‘application‘
-		}
+		video: true
+		// video: {
+		// 	mediaSource: "screen" // options are 'screen' ‘window‘ or ‘application‘
+		// }
 	};
 
 	var video$$ = fetchVideoClick$.map(function () {

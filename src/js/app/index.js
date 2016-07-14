@@ -23,9 +23,10 @@ const App = sources => {
 
 	const constraints = {
 		audio: false,
-		video: {
-			mediaSource: "screen" // options are 'screen' ‘window‘ or ‘application‘
-		}
+		video: true
+		// video: {
+		// 	mediaSource: "screen" // options are 'screen' ‘window‘ or ‘application‘
+		// }
 	};
 
 	const video$$ = fetchVideoClick$.map(() =>
