@@ -125,15 +125,18 @@ module.exports = Cycle;
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-var svg = require("./virtual-hyperscript-svg");
+var _require = require("./virtual-hyperscript-svg");
 
-var _require = require("./render-dom");
+var svg = _require.svg;
+var SupportedSvgTags = _require.SupportedSvgTags;
 
-var makeDOMDriver = _require.makeDOMDriver;
+var _require2 = require("./render-dom");
 
-var _require2 = require("./render-html");
+var makeDOMDriver = _require2.makeDOMDriver;
 
-var makeHTMLDriver = _require2.makeHTMLDriver;
+var _require3 = require("./render-html");
+
+var makeHTMLDriver = _require3.makeHTMLDriver;
 
 var mockDOMSource = require("./mock-dom-source");
 var h = require("./virtual-hyperscript");
@@ -203,11 +206,14 @@ var CycleDOM = _extends({
    * @name hJSX
    */
   hJSX: function hJSX(tag, attrs) {
+    var isSvgTag = SupportedSvgTags.indexOf(tag) !== -1;
+    var domHandler = isSvgTag ? svg : h;
+
     for (var _len = arguments.length, children = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
       children[_key - 2] = arguments[_key];
     }
 
-    return h(tag, attrs, children);
+    return domHandler(tag, attrs, children);
   },
 
   /**
@@ -763,8 +769,12 @@ var SVGAttributeNamespace = require('virtual-dom/virtual-hyperscript/svg-attribu
 var attributeHook = require('virtual-dom/virtual-hyperscript/hooks/attribute-hook');
 
 var SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+var SupportedSvgTags = ['circle', 'clipPath', 'defs', 'ellipse', 'g', 'image', 'line', 'linearGradient', 'mask', 'path', 'pattern', 'polygon', 'polyline', 'radialGradient', 'rect', 'stop', 'svg', 'text', 'tspan'];
 
-module.exports = svg;
+module.exports = {
+  svg: svg,
+  SupportedSvgTags: SupportedSvgTags
+};
 
 function svg(tagName, properties, children) {
   if (!children && isChildren(properties)) {
@@ -1306,12 +1316,40 @@ module.exports = (function split(undef) {
 // shim for using process in browser
 
 var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+(function () {
+  try {
+    cachedSetTimeout = setTimeout;
+  } catch (e) {
+    cachedSetTimeout = function () {
+      throw new Error('setTimeout is not defined');
+    }
+  }
+  try {
+    cachedClearTimeout = clearTimeout;
+  } catch (e) {
+    cachedClearTimeout = function () {
+      throw new Error('clearTimeout is not defined');
+    }
+  }
+} ())
 var queue = [];
 var draining = false;
 var currentQueue;
 var queueIndex = -1;
 
 function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
     draining = false;
     if (currentQueue.length) {
         queue = currentQueue.concat(queue);
@@ -1327,7 +1365,7 @@ function drainQueue() {
     if (draining) {
         return;
     }
-    var timeout = setTimeout(cleanUpNextTick);
+    var timeout = cachedSetTimeout(cleanUpNextTick);
     draining = true;
 
     var len = queue.length;
@@ -1344,7 +1382,7 @@ function drainQueue() {
     }
     currentQueue = null;
     draining = false;
-    clearTimeout(timeout);
+    cachedClearTimeout(timeout);
 }
 
 process.nextTick = function (fun) {
@@ -1356,7 +1394,7 @@ process.nextTick = function (fun) {
     }
     queue.push(new Item(fun, args));
     if (queue.length === 1 && !draining) {
-        setTimeout(drainQueue, 0);
+        cachedSetTimeout(drainQueue, 0);
     }
 };
 
@@ -1401,7 +1439,9 @@ process.umask = function() { return 0; };
  * Expose `Emitter`.
  */
 
-module.exports = Emitter;
+if (typeof module !== 'undefined') {
+  module.exports = Emitter;
+}
 
 /**
  * Initialize a new `Emitter`.
@@ -18255,54 +18295,25 @@ Object.defineProperty(exports, "__esModule", {
 	value: true
 });
 
-var _rx = require('rx');
+var _gfx = require('../../util/gfx');
 
-var _rx2 = _interopRequireDefault(_rx);
-
-var _dom = require('@cycle/dom');
+var _gfx2 = _interopRequireDefault(_gfx);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-window.requestAnimFrame = function () {
-	return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function (callback) {
-		window.setTimeout(callback, 1000 / 60);
-	};
-}();
-
-var hslToRgb = function hslToRgb(h, s, l) {
-	var r, g, b;
-
-	if (s == 0) {
-		r = g = b = l; // achromatic
-	} else {
-			var hue2rgb = function hue2rgb(p, q, t) {
-				if (t < 0) t += 1;
-				if (t > 1) t -= 1;
-				if (t < 1 / 6) return p + (q - p) * 6 * t;
-				if (t < 1 / 2) return q;
-				if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-				return p;
-			};
-
-			var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-			var p = 2 * l - q;
-			r = hue2rgb(p, q, h + 1 / 3);
-			g = hue2rgb(p, q, h);
-			b = hue2rgb(p, q, h - 1 / 3);
-		}
-
-	return [r * 255, g * 255, b * 255];
-};
-
 var draw = function draw() {
-	var ctx = document.getElementById('screen').getContext('2d');
+	var canvas = document.getElementById('screen');
+	var ctx = canvas.getContext('2d');
 	var video = document.getElementById('video');
+
+	canvas.width = video.clientWidth;
+	canvas.height = video.clientHeight;
 
 	var tr = 255;
 	var tg = 0;
 	var tb = 0;
 
-	requestAnimFrame(draw);
+	window.requestAnimFrame(draw);
 	ctx.drawImage(video, 0, 0, video.videoWidth, video.videoHeight, 0, 0, ctx.canvas.width, ctx.canvas.height);
 
 	var pixels = ctx.getImageData(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -18320,45 +18331,11 @@ var draw = function draw() {
 	ctx.putImageData(pixels, 0, 0);
 };
 
-window.draw = draw;
-
-var App = function App(sources) {
-
-	// fetchUsers(dom) -> usersRequest(http) -> usersResponse(http) -> displayUsers(dom)
-
-	var fetchVideoClick$ = sources.DOM.select('#fetch-video').events('click');
-
-	/*
- let video$$ = sources.WebRTC.getUserMedia({
- 	audio: false,
- 	video: true
- });
- */
-
-	var constraints = {
-		audio: false,
-		video: true
-	};
-
-	var video$$ = fetchVideoClick$.map(function () {
-		return sources.WEBRTC.getUserMedia(constraints);
-	}).mergeAll().startWith(false);
-
-	return {
-		DOM: video$$.map(function (video$) {
-			//console.log(video$);
-			return (0, _dom.section)([(0, _dom.header)('.navbar.navbar-default', [(0, _dom.div)('.container', [(0, _dom.div)('.navbar-header', [(0, _dom.a)('.navbar-brand', 'Cycle.js WebRTC Prototype')])])]), (0, _dom.div)('.container', [(0, _dom.br)(), (0, _dom.button)('.btn#fetch-video', 'Fetch video'), (0, _dom.div)('.row', [(0, _dom.div)('.col-xs-6', (0, _dom.video)('#video', {
-				muted: 'muted',
-				autoplay: 'autoplay',
-				src: video$ ? window.URL.createObjectURL(video$) : ''
-			})), (0, _dom.div)('.col-xs-6', (0, _dom.canvas)('#screen'))])])]);
-		})
-	};
+exports.default = {
+	draw: draw
 };
 
-exports.default = App;
-
-},{"@cycle/dom":2,"rx":27}],68:[function(require,module,exports){
+},{"../../util/gfx":71}],68:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, "__esModule", {
@@ -18369,37 +18346,82 @@ var _rx = require('rx');
 
 var _rx2 = _interopRequireDefault(_rx);
 
+var _dom = require('@cycle/dom');
+
+var _canvas = require('./canvas');
+
+var _canvas2 = _interopRequireDefault(_canvas);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var App = function App(sources) {
+	// fetchUsers(dom) -> usersRequest(http) -> usersResponse(http) -> displayUsers(dom)
+
+	var fetchVideoClick$ = sources.DOM.select('#fetch-video').events('click');
+	var drawClick$ = sources.DOM.select('#draw').events('click');
+
+	/*
+ let video$$ = sources.WebRTC.getUserMedia({
+ 	audio: false,
+ 	video: true
+ });
+ */
+
+	var constraints = {
+		audio: false,
+		video: {
+			mediaSource: "screen" // options are 'screen' ‘window‘ or ‘application‘
+		}
+	};
+
+	var video$$ = fetchVideoClick$.map(function () {
+		return sources.WEBRTC.getUserMedia(constraints);
+	}).mergeAll().startWith(false);
+
+	drawClick$.subscribe(function () {
+		return _canvas2.default.draw();
+	});
+
+	return {
+		DOM: video$$.map(function (video$) {
+			// console.log(video$);
+			return (0, _dom.section)([(0, _dom.header)([(0, _dom.h1)('Cycle.js WebRTC Prototype'), (0, _dom.ul)([(0, _dom.li)((0, _dom.button)('#fetch-video', 'Fetch video')), (0, _dom.li)((0, _dom.button)('#draw', 'Draw'))])]), (0, _dom.section)('.content', [(0, _dom.video)('#video', {
+				muted: 'muted',
+				autoplay: 'autoplay',
+				src: video$ ? window.URL.createObjectURL(video$) : ''
+			}), (0, _dom.canvas)('#screen')])]);
+		})
+	};
+};
+
+exports.default = App;
+
+},{"./canvas":67,"@cycle/dom":2,"rx":27}],69:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+
+var _rx = require('rx');
 
 // import webRTCAdapterTest from 'webrtc-adapter-test';
 
 var makeWebRTCDriver = function makeWebRTCDriver() {
-
-	navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
-
-	var getUserMedia = function getUserMedia(constraints, cb) {
-		var cbBuild = function cbBuild(err) {
-			return function (res) {
-				if (err) {
-					cb(new Error(res));
-				} else {
-					cb(res);
-				}
-			};
-		};
-		navigator.getUserMedia(constraints, cbBuild(false), cbBuild(true));
+	var getUserMedia = function getUserMedia(constraints) {
+		return _rx.Observable.fromPromise(navigator.mediaDevices.getUserMedia(constraints));
 	};
 
 	return function () {
 		return {
-			getUserMedia: _rx2.default.Observable.fromCallback(getUserMedia)
+			getUserMedia: getUserMedia
 		};
 	};
 };
 
 exports.default = makeWebRTCDriver;
 
-},{"rx":27}],69:[function(require,module,exports){
+},{"rx":27}],70:[function(require,module,exports){
 'use strict';
 
 var _rx = require('rx');
@@ -18434,4 +18456,47 @@ var drivers = {
 
 _core2.default.run(_index2.default, drivers);
 
-},{"./app/index.js":67,"./drivers/webrtc":68,"@cycle/core":1,"@cycle/dom":2,"@cycle/http":11,"rx":27}]},{},[69]);
+},{"./app/index.js":68,"./drivers/webrtc":69,"@cycle/core":1,"@cycle/dom":2,"@cycle/http":11,"rx":27}],71:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+var hslToRgb = function hslToRgb(h, s, l) {
+	var r = void 0;
+	var g = void 0;
+	var b = void 0;
+
+	if (s === 0) {
+		r = g = b = l; // achromatic
+	} else {
+		var hue2rgb = function hue2rgb(p, q, t) {
+			if (t < 0) t += 1;
+			if (t > 1) t -= 1;
+			if (t < 1 / 6) return p + (q - p) * 6 * t;
+			if (t < 1 / 2) return q;
+			if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+			return p;
+		};
+
+		var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+		var p = 2 * l - q;
+		r = hue2rgb(p, q, h + 1 / 3);
+		g = hue2rgb(p, q, h);
+		b = hue2rgb(p, q, h - 1 / 3);
+	}
+
+	return [r * 255, g * 255, b * 255];
+};
+
+window.requestAnimFrame = function () {
+	return window.requestAnimationFrame || window.webkitRequestAnimationFrame || window.mozRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function (callback) {
+		window.setTimeout(callback, 1000 / 60);
+	};
+}();
+
+exports.default = {
+	hslToRgb: hslToRgb
+};
+
+},{}]},{},[70]);

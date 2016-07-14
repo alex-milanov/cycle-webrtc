@@ -1,26 +1,14 @@
 
-import Rx from 'rx';
+import {Observable as $} from 'rx';
+
 // import webRTCAdapterTest from 'webrtc-adapter-test';
 
-let makeWebRTCDriver = () => {
-
-	navigator.getUserMedia = navigator.getUserMedia ||
-		navigator.webkitGetUserMedia ||
-		navigator.mozGetUserMedia;
-
-	let getUserMedia = (constraints, cb) => {
-		let cbBuild = (err) => (res) => {
-			if (err) {
-				cb(new Error(res));
-			} else {
-				cb(res);
-			}
-		};
-		navigator.getUserMedia(constraints, cbBuild(false), cbBuild(true));
-	};
+const makeWebRTCDriver = () => {
+	const getUserMedia = constraints =>
+		$.fromPromise(navigator.mediaDevices.getUserMedia(constraints));
 
 	return () => ({
-		getUserMedia: Rx.Observable.fromCallback(getUserMedia)
+		getUserMedia
 	});
 };
 

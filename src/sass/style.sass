@@ -1,0 +1,56 @@
+// font
+@import url(http://fonts.googleapis.com/css?family=Play:400,700&subset=latin,cyrillic-ext,cyrillic)
+// libs
+@import 'font-awesome'
+// inc
+@import 'inc/mixins'
+
+body
+	font-family: 'Play', Helvetica, Arial
+	margin: 0px
+	padding: 0px
+	background-color: #fff
+
+#app
+	+no-margin-padding
+	position: absolute
+	top: 0px
+	left: 0px
+	right: 0px
+	bottom: 0px
+	header
+		+no-margin-padding
+		+header-height(50px)
+		width: 100%
+		box-shadow: 0px 0px 5px #333
+		> *
+			+no-margin-padding
+			+header-height(50px)
+			float: left
+			padding: 0px 10px
+		h1
+		ul
+			list-style-type: none
+			li
+				+no-margin-padding
+				+header-height(50px)
+				border-left: 1px dashed #333
+				float: left
+				&:last-child
+					border-right: 1px dashed #333
+				button
+					+clear-form-control
+					+header-height(50px)
+					padding: 0px 10px
+					cursor: pointer
+					&:hover, &.selected, &.toggled
+						background: #ddd
+	.content
+		> *
+			width: 50%
+			display: inline-block
+			box-sizing: border-box
+		video
+			/*display: none;*/
+		canvas#screen
+			border: 1px solid #333
