@@ -9,24 +9,15 @@ import {
 import canvasApi from './canvas';
 
 const App = sources => {
-	// fetchUsers(dom) -> usersRequest(http) -> usersResponse(http) -> displayUsers(dom)
-
 	const fetchVideoClick$ = sources.DOM.select('#fetch-video').events('click');
 	const drawClick$ = sources.DOM.select('#draw').events('click');
 
-	/*
-	let video$$ = sources.WebRTC.getUserMedia({
-		audio: false,
-		video: true
-	});
-	*/
-
 	const constraints = {
 		audio: false,
-		video: true
-		// video: {
-		// 	mediaSource: "screen" // options are 'screen' ‘window‘ or ‘application‘
-		// }
+		// video: true
+		video: {
+			mediaSource: "screen" // options are 'screen' ‘window‘ or ‘application‘
+		}
 	};
 
 	const video$$ = fetchVideoClick$.map(() =>
